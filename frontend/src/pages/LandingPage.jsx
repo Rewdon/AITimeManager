@@ -89,7 +89,7 @@ const LandingPage = () => {
       </main>
 
       <footer className="border-t border-border py-8 text-center text-text-muted text-sm bg-background">
-        <p>&copy; 2024 AI Time Manager.</p>
+        <p>&copy; 2026 AI Time Manager.</p>
       </footer>
 
       <AuthModal 
