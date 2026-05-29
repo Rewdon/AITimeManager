@@ -21,7 +21,7 @@ const eventSchema = new mongoose.Schema({
   description: String,
   color: {
     type: String,
-    default: 'blue' // blue, red, green, purple
+    default: 'blue'
   }
 }, { timestamps: true });
 

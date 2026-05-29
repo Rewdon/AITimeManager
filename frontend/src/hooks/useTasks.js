@@ -1,10 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import api from '../api/axios';
+import { useToast } from '../context/ToastContext';
 
 export const useTasks = () => {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { success, error: showError } = useToast();
 
   const fetchTasks = useCallback(async () => {
     try {
@@ -14,18 +16,21 @@ export const useTasks = () => {
       setError(null);
     } catch (err) {
       setError('Nie udało się pobrać listy zadań.');
+      showError('Nie udało się pobrać listy zadań.');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [showError]);
 
   const addTask = async (taskData) => {
     try {
       const response = await api.post('/tasks', taskData);
       setTasks((prev) => [response.data, ...prev]);
+      success('Nowe zadanie dodane!');
       return response.data;
     } catch (err) {
       setError('Nie udało się dodać zadania.');
+      showError('Nie udało się dodać zadania.');
       throw err;
     }
   };
@@ -41,8 +46,10 @@ export const useTasks = () => {
       setTasks(prev => prev.map(task => 
         task._id === id ? response.data : task
       ));
+      success('Zadanie zaktualizowane.');
     } catch (err) {
       setError('Nie udało się zaktualizować zadania.');
+      showError('Nie udało się zaktualizować zadania.');
       fetchTasks(); 
     }
   };
@@ -53,8 +60,10 @@ export const useTasks = () => {
     try {
       await api.delete(`/tasks/${id}`);
       setTasks((prev) => prev.filter((task) => task._id !== id));
+      success('Zadanie zostało usunięte.');
     } catch (err) {
       setError('Nie udało się usunąć zadania.');
+      showError('Nie udało się usunąć zadania.');
     }
   };
 

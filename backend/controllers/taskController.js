@@ -47,9 +47,9 @@ const createTask = async (req, res) => {
         let aiResult = null;
         
         if (!taskType || !estimatedTime || !priority || priority === 'medium') {
-            console.log(`🤖 AI analizuje: "${title}"...`);
+            console.log(`AI analizuje: "${title}"...`);
             aiResult = await analyzeTaskWithAI(title, description);
-            console.log("✅ Wynik z Gemini:", aiResult);
+            console.log("Wynik z Gemini:", aiResult);
         }
 
         if (!taskType && aiResult?.taskType) {
@@ -73,7 +73,7 @@ const createTask = async (req, res) => {
             finalPriority = 'medium';
         }
 
-        console.log("💾 ZAPISUJĘ:", { 
+        console.log("ZAPISUJĘ:", { 
             title, 
             taskType: finalTaskType, 
             priority: finalPriority 
@@ -90,7 +90,7 @@ const createTask = async (req, res) => {
 
         res.status(201).json(task);
     } catch (error) {
-        console.error("❌ Błąd tworzenia zadania:", error);
+        console.error("Błąd tworzenia zadania:", error);
         res.status(500).json({ message: 'Błąd serwera', error: error.message });
     }
 };

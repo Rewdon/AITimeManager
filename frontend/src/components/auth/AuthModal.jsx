@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Mail, Lock, User, X, Loader2, ArrowRight } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../context/ToastContext';
 import api from '../../api/axios';
 
 const AuthModal = ({ isOpen, onClose, initialMode = 'login' }) => {
@@ -11,6 +12,7 @@ const AuthModal = ({ isOpen, onClose, initialMode = 'login' }) => {
   const [isLoading, setIsLoading] = useState(false);
   
   const { login } = useAuth();
+  const { success, error: toastError } = useToast();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -37,11 +39,14 @@ const AuthModal = ({ isOpen, onClose, initialMode = 'login' }) => {
       const { token, ...userData } = response.data;
       
       login(userData, token);
+      success(isLoginMode ? 'Zalogowano pomyślnie!' : 'Konto zostało pomyślnie utworzone!');
       onClose();
       navigate('/dashboard');
       
     } catch (err) {
-      setError(err.response?.data?.message || 'Wystąpił błąd. Spróbuj ponownie.');
+      const errorMsg = err.response?.data?.message || 'Wystąpił błąd. Spróbuj ponownie.';
+      setError(errorMsg);
+      toastError(errorMsg);
     } finally {
       setIsLoading(false);
     }

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Sparkles, ArrowRight, Loader2, RefreshCw, Bot } from 'lucide-react';
 import { useTasks } from '../hooks/useTasks';
+import { useToast } from '../context/ToastContext';
 import api from '../api/axios';
 import TaskCard from '../components/tasks/TaskCard';
 import TaskInput from '../components/tasks/TaskInput';
@@ -11,6 +12,7 @@ import EditTaskModal from '../components/tasks/EditTaskModal';
 
 const Dashboard = () => {
   const { tasks, updateTaskStatus, deleteTask, updateTask, addTask } = useTasks();
+  const { success, error } = useToast();
   
   const [dailyPlan, setDailyPlan] = useState('');
   const [loadingPlan, setLoadingPlan] = useState(false); 
@@ -20,8 +22,10 @@ const Dashboard = () => {
       setLoadingPlan(true);
       const res = await api.get('/ai/plan');
       setDailyPlan(res.data.plan);
+      success('Strategia AI została wygenerowana!');
     } catch (err) {
       setDailyPlan("Nie udało się pobrać strategii AI. Spróbuj ponownie.");
+      error('Błąd podczas generowania planu AI.');
     } finally {
       setLoadingPlan(false);
     }

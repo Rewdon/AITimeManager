@@ -1,10 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import api from '../api/axios';
+import { useToast } from '../context/ToastContext';
 
 export const useNotes = () => {
   const [notes, setNotes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { success, error: showError } = useToast();
 
   const fetchNotes = useCallback(async () => {
     try {
@@ -14,18 +16,21 @@ export const useNotes = () => {
       setError(null);
     } catch (err) {
       setError('Nie udało się pobrać notatek.');
+      showError('Nie udało się pobrać notatek.');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [showError]);
 
   const addNote = async (content, color = 'yellow') => {
     try {
       const res = await api.post('/notes', { content, color });
       setNotes(prev => [res.data, ...prev]);
+      success('Notatka została dodana!');
       return res.data;
     } catch (err) {
       setError('Nie udało się dodać notatki.');
+      showError('Nie udało się dodać notatki.');
       throw err;
     }
   };
@@ -34,8 +39,10 @@ export const useNotes = () => {
     try {
       await api.delete(`/notes/${id}`);
       setNotes(prev => prev.filter(n => n._id !== id));
+      success('Notatka usunięta.');
     } catch (err) {
       setError('Nie udało się usunąć notatki.');
+      showError('Nie udało się usunąć notatki.');
     }
   };
 

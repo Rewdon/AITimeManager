@@ -86,4 +86,25 @@ const getMe = async (req, res) => {
     }
 };
 
-module.exports = { registerUser, loginUser, getMe };
+const deleteTestUser = async (req, res) => {
+    const { email } = req.body;
+
+    try {
+        if (!email) {
+            return res.status(400).json({ message: 'Proszę podać email do usunięcia' });
+        }
+
+        const result = await User.deleteOne({ email });
+
+        if (result.deletedCount === 1) {
+            res.status(200).json({ message: 'Użytkownik testowy usunięty' });
+        } else {
+            res.status(404).json({ message: 'Nie znaleziono użytkownika' });
+        }
+    } catch (error) {
+        console.error('Błąd usuwania:', error);
+        res.status(500).json({ message: 'Błąd serwera', error: error.message });
+    }
+};
+
+module.exports = { registerUser, loginUser, getMe, deleteUser: deleteTestUser };

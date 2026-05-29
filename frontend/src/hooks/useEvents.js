@@ -1,10 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import api from '../api/axios';
+import { useToast } from '../context/ToastContext';
 
 export const useEvents = () => {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { success, error: showError } = useToast();
 
   const fetchEvents = useCallback(async () => {
     try {
@@ -22,10 +24,11 @@ export const useEvents = () => {
       setError(null);
     } catch (err) {
       setError('Nie udało się pobrać wydarzeń.');
+      showError('Nie udało się pobrać wydarzeń.');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [showError]);
 
   const addEvent = async (eventData) => {
     try {
@@ -36,9 +39,11 @@ export const useEvents = () => {
         end: new Date(res.data.end)
       };
       setEvents(prev => [...prev, newEvent].sort((a, b) => a.start - b.start));
+      success('Wydarzenie dodane do kalendarza!');
       return newEvent;
     } catch (err) {
       setError('Nie udało się dodać wydarzenia.');
+      showError('Nie udało się dodać wydarzenia.');
       throw err;
     }
   };
@@ -47,8 +52,10 @@ export const useEvents = () => {
     try {
       await api.delete(`/events/${id}`);
       setEvents(prev => prev.filter(e => e._id !== id));
+      success('Wydarzenie zostało usunięte.');
     } catch (err) {
       setError('Nie udało się usunąć wydarzenia.');
+      showError('Nie udało się usunąć wydarzenia.');
     }
   };
 

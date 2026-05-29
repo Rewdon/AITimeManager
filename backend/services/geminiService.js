@@ -8,23 +8,33 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 const analyzeTaskWithAI = async (title, description = "") => {
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-3-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-3.5-flash" });
 
     const prompt = `
-      Jesteś asystentem API. Zwróć TYLKO czysty JSON (bez markdown).
-      Przeanalizuj zadanie: "${title}". Opis: "${description}".
-      
-      Zdecyduj:
-      1. taskType: "ACTIVE" (wymaga skupienia) lub "PASSIVE" (w tle).
-      2. estimatedTime: czas w minutach (number).
-      3. priority: "high" (pilne/krytyczne), "medium" (standardowe), "low" (mało ważne/na kiedyś).
-      
-      Zasady priorytetów:
-      - Słowa kluczowe "pilne", "ważne", "dzisiaj", "awaria", "termin", "szef", "klient" -> high.
-      - Rozrywka, hobby, luźne pomysły -> low.
-      - Standardowa praca -> medium.
+      Jesteś bezstanowym procesorem danych API. Twoim jedynym celem jest analiza tekstu i zwrócenie wyniku WYŁĄCZNIE w postaci surowego obiektu JSON. Obowiązuje absolutny zakaz dodawania jakichkolwiek powitań, wyjaśnień oraz bloków formatowania Markdown (nigdy nie używaj znaków `` ani ``json).
 
-      Wzór odpowiedzi:
+      [DANE WEJŚCIOWE]
+      Tytuł: "${title}"
+      Opis: "${description}"
+
+      [ZASADY EKSTRAKCJI]
+      Przeanalizuj powyższe dane i przypisz im dokładnie trzy parametry.
+
+      1. "taskType" (String):
+        - "ACTIVE" — Wymaga pełnego skupienia, zaangażowania umysłowego lub obecności (np. programowanie, pisanie, spotkanie, nauka).
+        - "PASSIVE" — Może dziać się w tle lub wymaga minimalnej uwagi (np. pobieranie plików, oczekiwanie na kompilację/odpowiedź, słuchanie podcastu).
+
+      2. "estimatedTime" (Integer):
+        - Realistyczny czas wykonania wyrażony wyłącznie w minutach (liczba całkowita).
+        - Jeśli opis nie zawiera jasnych ram czasowych, zastosuj rzetelne wartości domyślne dla podobnych zadań (np. e-mail = 10, aktualizacja systemu = 15, raport = 60).
+
+      3. "priority" (String):
+        - "high" — Zadania pilne, krytyczne. Kontekst lub słowa kluczowe: ASAP, awaria, natychmiast, dzisiaj, deadline, klient, szef.
+        - "low" — Rozrywka, hobby, zadania opcjonalne. Kontekst: "kiedyś", "może", "fajnie byłoby", pomysły na przyszłość.
+        - "medium" — Standardowa praca i codzienne zadania bez skrajnych sygnałów pilności lub błahości.
+
+      [FORMAT WYJŚCIOWY - WYMAGANY WZÓR]
+      Zwróć dokładnie ten obiekt JSON (z podmienionymi wartościami) jako czysty ciąg znaków:
       {"taskType": "ACTIVE", "estimatedTime": 30, "priority": "medium"}
     `;
 
@@ -40,7 +50,7 @@ const analyzeTaskWithAI = async (title, description = "") => {
     return JSON.parse(jsonMatch[0]);
 
   } catch (error) {
-    console.error("❌ Błąd Gemini AI:", error.message);
+    console.error("Błąd Gemini AI:", error.message);
     return {
       taskType: 'ACTIVE',
       estimatedTime: 30,
@@ -51,7 +61,7 @@ const analyzeTaskWithAI = async (title, description = "") => {
 
 const generateDailyPlan = async (tasks, events, userName) => {
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-3.5-flash" });
 
     const now = new Date();
     const currentDate = now.toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long' });
@@ -66,26 +76,27 @@ const generateDailyPlan = async (tasks, events, userName) => {
     ).join('\n');
 
     const prompt = `
-      Jesteś osobistym asystentem produktywności dla użytkownika o imieniu ${userName}.
-      
-      DANE CZASOWE:
-      - Dziś jest: ${currentDate}
-      - OBECNA GODZINA: ${currentTime} (To bardzo ważne!)
+      Jesteś eksperckim asystentem produktywności. Twój użytkownik to: ${userName}.
 
-      KALENDARZ (Sztywne ramy):
+      [KONTEKST DANYCH]
+      - Dzisiejsza data: ${currentDate}
+      - OBECNA GODZINA: ${currentTime} (To Twój absolutny punkt startowy)
+
+      [KALENDARZ - SZTYWNE RAMY]
       ${eventsList || "Brak spotkań."}
 
-      LISTA ZADAŃ (Do zrobienia):
+      [ZADANIA - DO ZROBIENIA]
       ${tasksList || "Brak zadań."}
 
-      Twoim celem jest ułożenie strategii na RESZTĘ DNIA (max 3-4 zdania).
-      
-      Zasady krytyczne:
-      1. Spójrz na obecną godzinę (${currentTime}). Jeśli jakieś spotkanie z kalendarza już minęło, zignoruj je lub wspomnij krótko jako "po spotkaniu X".
-      2. Nie planuj zadań na godziny, które już minęły!
-      3. Znajdź najbliższą wolną lukę czasową OD TERAZ.
-      4. Sugeruj zadania pasujące do pozostałego czasu (np. nie proponuj 3-godzinnego zadania, jeśli jest 16:00 a o 17:00 koniec pracy).
-      5. Styl: Konkretny, motywujący, krótki. Bez formatowania markdown (pogrubień itp.), czysty tekst.
+      [ZADANIE]
+      Przeanalizuj OBECNĄ GODZINĘ i zaplanuj optymalną strategię działania wyłącznie na RESZTĘ DNIA. 
+
+      [ZASADY KRYTYCZNE - BEZWZGLĘDNIE PRZESTRZEGAJ]
+      1. Świadomość czasu: Traktuj ${currentTime} jako punkt zero. Nie planuj niczego w przeszłości. Wydarzenia z kalendarza, które już minęły, całkowicie zignoruj.
+      2. Realizm okien czasowych: Znajdź najbliższą wolną lukę OD TERAZ. Dopasuj wielkość sugerowanego zadania do dostępnego czasu (nie proponuj długich zadań, jeśli zostało mało czasu do końca dnia lub kolejnego spotkania).
+      3. Limit długości: Wygeneruj maksymalnie 3 do 4 zdań.
+      4. Format wyjściowy: Zwróć WYŁĄCZNIE czysty tekst. Obowiązuje absolutny zakaz używania jakiegokolwiek formatowania Markdown (żadnych gwiazdek, pogrubień, kursyw, punktorów ani list).
+      5. Ton: Zwięzły, konkretny, motywujący i nastawiony na akcję.
     `;
 
     const result = await model.generateContent(prompt);
